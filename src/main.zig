@@ -1,5 +1,4 @@
 const std = @import("std");
-const Io = std.Io;
 
 const tor = @import("tor");
 
