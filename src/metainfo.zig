@@ -32,6 +32,31 @@ pub const MetaInfo = struct {
             .info_hash = info_hash,
         };
     }
+
+    pub fn getTrackerUrl(self: MetaInfo, alloc: Allocator) [][]const u8 {
+        var seen = std.StringHashMap(void).init(alloc);
+        defer seen.deinit(alloc);
+
+        var list = try std.ArrayList([]const u8).initCapacity(alloc, 10);
+        errdefer list.deinit(alloc);
+        if (self.announce_list) |tiers| {
+            for (tiers) |tier| {
+                for (tier) |url| {
+                    const gop = try seen.getOrPut(url);
+                    if (!gop.found_existing) {
+                        try list.append(alloc, url);
+                    }
+                }
+            }
+        }
+        if (self.announce) |url| {
+            const gop = try seen.getOrPut(url);
+            if (!gop.found_existing) {
+                try list.append(alloc, url);
+            }
+        }
+        return list.toOwnedSlice(alloc);
+    }
 };
 
 fn parseInfo(alloc: Allocator, info_val: Value) ValueError!Info {
